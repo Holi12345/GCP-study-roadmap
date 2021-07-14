@@ -1,0 +1,160 @@
+Exploring Your Ecommerce Dataset with SQL in Google BigQuery | 在Google BigQuery中使用 SQL 探索电子商务数据集
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Overview
+
+A ecommerce dataset : millions of Google Analytics records for the Google Merchandise Store| 
+电子商务数据集，包含数百万条Google商店的Google分析的记录
+
+Use BigQuery to:
+
+  Access an ecommerce dataset | 访问电子商务数据集
+
+  Look at the dataset metadata | 查看数据集元数据 
+
+  Remove duplicate entries | 删除重复条目
+
+  Write and execute queries | 编写和执行查询
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Pin the Lab Project in BigQuery | 在 BigQuery中抓取固定实验室项目
+
+   >Set data-to-insights project environment | 设置data-to-insights的项目环境
+   
+      # Navigation menu > BigQuery > Done | 导航菜单 > BigQuery > 完成
+      
+      # public datasets: https://console.cloud.google.com/bigquery?project=data-to-insights&page=ecommerce | 公共数据集网站
+      
+      # data-to-insights > Click to pin | data-to-insights > 单击以抓取固定
+      
+      # refresh the BigQuery web UI - data-to-insights project is listed | 刷新 BigQuery 网页界面-项目就在那了
+ 
+--------------------------------------------------------------------------------------------------------------------------------
+
+Explore ecommerce data and Identify duplicate rows | 探索电子商务数据，识别重复数据
+
+  >Explore the all_sessions_raw table data | 探索all_sessions_raw的数据
+  
+    # Expand node > ecommerce > all_sessions_raw
+    
+       * 3 views of the table data: Schema tab ; Details tab ; Preview tab | 表数据的3个视图：模式选项卡；详细信息选项卡；预览选项卡
+  
+  >Identify duplicate rows | 识别重复数据
+    
+    # use SQL GROUP BY function on every field | 所有字段中使用SQL GROUP BY函数
+    
+    # counts (COUNT) rows that have the same values across every field | 计数统计所有字段具有相同值的行 (COUNT)
+    
+      code as below :
+      *******************************
+        #standardSQL
+        SELECT COUNT(*) as num_duplicate_rows, * FROM
+        `data-to-insights.ecommerce.all_sessions_raw`
+        GROUP BY
+        fullVisitorId, channelGrouping, time, country, city, totalTransactionRevenue, transactions, timeOnSite, pageviews, sessionQualityDim, date, visitId, type, productRefundAmount, productQuantity, productPrice, productRevenue, productSKU, v2ProductName, v2ProductCategory, productVariant, currencyCode, itemQuantity, itemRevenue, transactionRevenue, transactionId, pageTitle, searchKeyword, pagePathLevel1, eCommerceAction_type, eCommerceAction_step, eCommerceAction_option
+        HAVING num_duplicate_rows > 1;
+      *******************************
+  
+  >Analyze the new all_sessions table | 分析新的 all_sessions 表
+    #Run the query to confirm that no duplicates exist, this time in the all_sessions table:|
+    在all_sessions表中运行代码以确认不存在重复项：
+      code as below :
+      *******************************    
+        #standardSQL
+        # schema: https://support.google.com/analytics/answer/3437719?hl=en
+        SELECT
+        fullVisitorId, # the unique visitor ID | 唯一访客ID
+        visitId, # a visitor can have multiple visits | 访问者可以多次访问
+        date, # session date stored as string YYYYMMDD | 会话日期存储为字符串 YYYYMMDD
+        time, # time of the individual site hit  (can be 0 to many per visitor session) | 单个站点点击的时间（每个访问者会话可以是 0 到多个）
+        v2ProductName, # not unique since a product can have variants like Color | 不唯一，因为产品可以有颜色等变体
+        productSKU, # unique for each product | 每个产品SKU都是独一无二的
+        type, # a visitor can visit Pages and/or can trigger Events (even at the same time) | 访问者可以访问页面和/或触发事件（甚至同时）
+        eCommerceAction_type, # maps to ‘add to cart', ‘completed checkout' | 映射到“添加到购物车”、“完成结帐”
+        eCommerceAction_step,
+        eCommerceAction_option,
+          transactionRevenue, # revenue of the order | 订单金额
+          transactionId, # unique identifier for revenue bearing transaction | 交易金额的唯一标识符
+        COUNT(*) as row_count
+        FROM
+        `data-to-insights.ecommerce.all_sessions`
+        GROUP BY 1,2,3 ,4, 5, 6, 7, 8, 9, 10,11,12
+        HAVING row_count > 1 # find duplicates | 查找重复项
+      *******************************    
+      Note: In SQL, you can GROUP BY or ORDER BY the index of the column like using "GROUP BY 1" instead of "GROUP BY fullVisitorId" |
+      注意：在SQL中，您可以像使用“GROUP BY 1”而不是“GROUP BY fullVisitorId”一样对列的索引进行GROUP BY或ORDER BY
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Write basic SQL on ecommerce data | 为电子商务数据编写基本 SQL
+
+  >Write a query that shows total unique visitors | 编写查询:非重复访客名单
+  
+    #counting product_views and the number of unique visitors by counting fullVisitorID. | 
+    通过计算fullVisitorID来计算product_views和访客量
+    
+    # 【+ Compose New Query】> Write this query(as below code) > real-time query validator > Run
+      code as below :
+      *******************************  
+        #standardSQL
+        SELECT
+          COUNT(*) AS product_views,
+          COUNT(DISTINCT fullVisitorId) AS unique_visitors
+        FROM `data-to-insights.ecommerce.all_sessions`;
+      *******************************
+  Results
+  
+  >Write a query shows total unique visitors(fullVisitorID) by the referring site (channelGrouping): |
+  编写一个查询，显示引用站点 (channelGrouping) 的非重复访客总数
+      code as below :
+      *******************************     
+         #standardSQL
+        SELECT
+          COUNT(DISTINCT fullVisitorId) AS unique_visitors,
+          channelGrouping
+        FROM `data-to-insights.ecommerce.all_sessions`
+        GROUP BY channelGrouping
+        ORDER BY channelGrouping DESC;     
+      *******************************     
+ 
+  >Write a query to list all the unique product names (v2ProductName) alphabetically: |
+  编写查询以按字母顺序列出所有唯一的产品名称 (v2ProductName)
+      code as below :
+      *******************************     
+        #standardSQL
+        SELECT
+          (v2ProductName) AS ProductName
+        FROM `data-to-insights.ecommerce.all_sessions`
+        GROUP BY ProductName
+        ORDER BY ProductName    
+      *******************************     
+      
+  >Write a query to list the five products with the most views (product_views) from all visitors (include people who have viewed the same product more than once). Your query counts number of times a product (v2ProductName) was viewed (product_views), puts the list in descending order, and lists the top 5 entries:: |
+  编写查询以列出所有访问者（包括多次查看同一产品的人）浏览次数 (product_views) 最多的五种产品。 您的查询计算产品 (v2ProductName) 被查看的次数 (product_views)，按降序排列列表，并列出前 5 个条目:: |
+      #Tip: In Google Analytics, a visitor can "view" a product during the following interaction types: 'page', 'screenview', 'event', 'transaction', 'item', 'social', 'exception', 'timing'. For our purposes, simply filter for only type = 'PAGE'.
+
+      code as below :
+      *******************************     
+        #standardSQL
+        SELECT
+          COUNT(*) AS product_views,
+          (v2ProductName) AS ProductName
+        FROM `data-to-insights.ecommerce.all_sessions`
+        WHERE type = 'PAGE'
+        GROUP BY v2ProductName
+        ORDER BY product_views DESC
+        LIMIT 5;   
+      *******************************        
+      
+    #Now refine the query to no longer double-count product views for visitors who have viewed a product many times. Each distinct product view should only count once per visitor.
+    #优化查询:访客多次查看同一产品不再重复计数, 每个访客查看每个不同的产品只应计数一次。
+    #Tip: You can use the SQL WITH clause to help break apart a complex query into multiple steps. Here we first create a query that finds each unique product per visitor and counts them once. Then the second query performs the aggregation across all visitors and products.
+    #提示：您可以使用SQL WITH子句帮助将复杂查询分解为多个步骤。我们首先创建一个查询，查找每个访问者的每个唯一产品并将它们计数一次，然后第二个查询对所有访问者和产品执行聚合。
+    
+    #Next, expand your previous query to include the total number of distinct products ordered and the total number of total units ordered (productQuantity):
+    #接下来，扩展您之前的查询以包括订购的不同产品的总数和订购的总单数 (productQuantity)：
+    
+    #Expand the query to include the average amount of product per order (total number of units ordered/total number of orders, or SUM(productQuantity)/COUNT(productQuantity)).
+    #扩展查询以包括每个订单的平均产品数量（订购的单位总数/订单总数，或 SUM(productQuantity)/COUNT(productQuantity)）。
