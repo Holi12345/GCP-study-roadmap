@@ -1,0 +1,35 @@
+2>Explore and Create Reports with Data Studio
+-------------------------------------------------------------------------------------------------------------------------------------------
+Overview
+
+  >how to create new reports and explore your ecommerce dataset visually for insights.|如何创建新报告并直观地探索电子商务数据集以获取有价值的观点。
+  
+    #Launch Data Studio | 启动Data Studio
+
+    #Create and manipulate a report | 创建和操作报表
+
+    #Create an interactive filter for your report | 为您的报告创建交互式过滤器
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+Launch Data Studio and create a blank report | 启动Data Studio并创建一个空白报告
+
+  > Google Data Studio : https://datastudio.google.com/ | Data Studio链接
+    Blank Report > Continue > "No" > Continue > Click Blank Report again > Connect to data tab > BigQuery > Authorize
+    
+  > Define your project: | 定义你的项目
+      Click on Shared Projects > your Project ID, which is found in the Connection Details panel (begins with qwiklabs-).|点击共享项目
+      For Shared project name type "data-to-insights". | 对于共享项目命名为“data-to-insights”
+      For Dataset select ecommerce. | 数据集选择ecommerce。
+      For Table select sales_report. | 表选择 sales_report
+      
+  > Add > Add to Report > ratio > number[123] icon > Scroll down ：Type area > Numeric > Percent.
+ 
+-------------------------------------------------------------------------------------------------------------------------------------------
+Create a report
+
+  > Add a Report Title and Page Title
+  
+  > Create a data table
+  
+  > Create an interactive filter
